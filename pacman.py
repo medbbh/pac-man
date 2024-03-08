@@ -20,15 +20,27 @@ turns_allowed = [False, False, False, False]
 direction_command = 0
 player_speed = 2
 score = 0
-startUp_count = 0
+startup_counter = 0
 moving = False
 num1 = (HEIGHT - 50) // 32
 num2 = WIDTH // 30
 
 player_x = 300
 player_y = 425
-
 direction = 0
+blinky_x = 40
+blinky_y = 35
+blinky_direction = 0
+pinky_x = 286
+pinky_y = 247
+pinky_direction = 2
+inky_x = 286
+inky_y = 270
+inky_direction = 2
+clyde_x = 286
+clyde_y = 283
+clyde_direction = 2
+
 counter = 0
 flicker = False
 
@@ -64,21 +76,7 @@ dead_img = pygame.transform.scale(
     pygame.image.load(f"assets/ghost_images/dead.png"), (30, 30)
 )
 
-blinky_x = 40
-blinky_y = 35
-blinky_direction = 0
 
-pinky_x = 286
-pinky_y = 247
-pinky_direction = 2
-
-inky_x = 286
-inky_y = 270
-inky_direction = 2
-
-clyde_x = 286
-clyde_y = 283
-clyde_direction = 2
 
 eaten_ghost = [False, False, False, False]
 
@@ -128,9 +126,8 @@ class Ghost:
             screen.blit(spooked_img, (self.x_pos, self.y_pos))
         else:
             screen.blit(dead_img, (self.x_pos, self.y_pos))
-        ghost_rect = pygame.rect.Rect(
-            (self.center_x - 10, self.center_y - 10), (30, 30)
-        )
+        ghost_rect = pygame.rect.Rect((self.center_x, self.center_y), (30, 30))
+
         return ghost_rect
 
     def check_collisions(self):
@@ -162,7 +159,7 @@ class Ghost:
                 self.turns[2] = True
 
             if self.direction == 2 or self.direction == 3:
-                if 12 <= self.center_x % num2 <= 18:
+                if 8 <= self.center_x % num2 <= 12:
                     if level[(self.center_y + num3) // num1][
                         self.center_x // num2
                     ] < 3 or (
@@ -179,7 +176,7 @@ class Ghost:
                         and (self.in_box or self.dead)
                     ):
                         self.turns[2] = True
-                if 12 <= self.center_y % num1 <= 18:
+                if 8 <= self.center_y % num1 <= 12:
                     if level[self.center_y // num1][
                         (self.center_x - num2) // num2
                     ] < 3 or (
@@ -198,7 +195,7 @@ class Ghost:
                         self.turns[0] = True
 
             if self.direction == 0 or self.direction == 1:
-                if 12 <= self.center_x % num2 <= 18:
+                if 8 <= self.center_x % num2 <= 12:
                     if level[(self.center_y + num3) // num1][
                         self.center_x // num2
                     ] < 3 or (
@@ -215,7 +212,7 @@ class Ghost:
                         and (self.in_box or self.dead)
                     ):
                         self.turns[2] = True
-                if 12 <= self.center_y % num1 <= 18:
+                if 8 <= self.center_y % num1 <= 12:
                     if level[self.center_y // num1][
                         (self.center_x - num3) // num2
                     ] < 3 or (
@@ -235,7 +232,7 @@ class Ghost:
         else:
             self.turns[0] = True
             self.turns[1] = True
-        if 210 < self.x_pos < 340 and 350 < self.y_pos < 280:
+        if 245 < self.x_pos < 360 and 255 < self.y_pos < 305:
             self.in_box = True
         else:
             self.in_box = False
@@ -244,7 +241,9 @@ class Ghost:
     def move_clyde(self):
         # r, l, u, d
         # clyde is going to turn whenever advantageous for pursuit
-        if self.direction == 0:
+        if self.in_box:
+            self.y_pos -= self.speed
+        elif self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
             elif not self.turns[0]:
@@ -373,7 +372,9 @@ class Ghost:
     def move_blinky(self):
         # r, l, u, d
         # blinky is going to turn whenever colliding with walls, otherwise continue straight
-        if self.direction == 0:
+        if self.in_box:
+            self.y_pos -= self.speed
+        elif self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
             elif not self.turns[0]:
@@ -479,6 +480,8 @@ class Ghost:
     def move_inky(self):
         # r, l, u, d
         # inky turns up or down at any point to pursue, but left and right only on collision
+        # if self.in_box :
+        #     self.y_pos -= self.speed
         if self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
@@ -578,21 +581,23 @@ class Ghost:
                 elif self.target[0] < self.x_pos and self.turns[1]:
                     self.direction = 1
                     self.x_pos -= self.speed
-                elif self.target[0] < self.x_pos and not self.turns[1] and self.turns[0] :
+                elif (
+                    self.target[0] < self.x_pos and not self.turns[1] and self.turns[0]
+                ):
                     self.direction = 0
                     self.x_pos += self.speed
                 elif self.target[1] < self.y_pos and self.turns[2]:
                     self.direction = 2
                     self.y_pos -= self.speed
 
-                elif not self.in_box and self.target[1] > self.y_pos and self.turns[3]:
-                    self.direction = 3
-                    self.y_pos += self.speed
-                
-                elif not self.in_box and self.target[0] > self.x_pos and self.turns[0]:
-                    self.direction = 0
-                    self.x_pos += self.speed
-                
+                # elif not self.in_box and self.target[1] > self.y_pos and self.turns[3]:
+                #     self.direction = 3
+                #     self.y_pos += self.speed
+
+                # elif not self.in_box and self.target[0] > self.x_pos and self.turns[0]:
+                #     self.direction = 0
+                #     self.x_pos += self.speed
+
                 elif self.turns[2]:
                     self.direction = 2
                     self.y_pos -= self.speed
@@ -613,7 +618,9 @@ class Ghost:
     def move_pinky(self):
         # r, l, u, d
         # pinky is going to turn left or right whenever advantageous, but only up or down on collision
-        if self.direction == 0:
+        if self.in_box:
+            self.y_pos -= self.speed
+        elif self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
             elif not self.turns[0]:
@@ -626,13 +633,13 @@ class Ghost:
                 elif self.target[0] < self.x_pos and self.turns[1]:
                     self.direction = 1
                     self.x_pos -= self.speed
-                
-                elif not self.in_box and self.target[1] < self.y_pos and not self.turns[3]:
-                    self.direction = 1
-                    self.x_pos -= self.speed
-                elif not self.in_box and self.target[0] > self.x_pos and self.target[1] > self.y_pos and self.turns[0]:
-                    self.direction = 0
-                    self.x_pos += self.speed
+
+                # elif not self.in_box and self.target[1] < self.y_pos and not self.turns[3]:
+                #     self.direction = 1
+                #     self.x_pos -= self.speed
+                # elif not self.in_box and self.target[0] > self.x_pos and self.target[1] > self.y_pos and self.turns[0]:
+                #     self.direction = 0
+                #     self.x_pos += self.speed
 
                 elif self.turns[3]:
                     self.direction = 3
@@ -645,7 +652,7 @@ class Ghost:
                     self.x_pos -= self.speed
             elif self.turns[0]:
                 self.x_pos += self.speed
-        
+
         elif self.direction == 1:
             if self.target[1] > self.y_pos and self.turns[3]:
                 self.direction = 3
@@ -672,7 +679,7 @@ class Ghost:
                     self.x_pos += self.speed
             elif self.turns[1]:
                 self.x_pos -= self.speed
-        
+
         elif self.direction == 2:
             if self.target[1] < self.y_pos and self.turns[2]:
                 self.direction = 2
@@ -698,7 +705,7 @@ class Ghost:
                     self.x_pos += self.speed
             elif self.turns[2]:
                 self.y_pos -= self.speed
-        
+
         elif self.direction == 3:
             if self.target[1] > self.y_pos and self.turns[3]:
                 self.y_pos += self.speed
@@ -729,13 +736,13 @@ class Ghost:
                     self.direction = 1
                     self.x_pos -= self.speed
                 else:
-                    self.y_pos += self.speed                
-       
+                    self.y_pos += self.speed
+
         if self.x_pos < -1:
             self.x_pos = WIDTH - 30
         elif self.x_pos > WIDTH - 30:
             self.x_pos = 0
-        
+
         return self.x_pos, self.y_pos, self.direction
 
 
@@ -748,6 +755,7 @@ for i in range(1, 5):
 
 
 def draw_misc():
+
     score_text = font.render(f"Score : {score}", True, "white")
     screen.blit(score_text, (10, 600))
     if powerup:
@@ -770,6 +778,7 @@ def draw_misc():
             "YAYYY CONTGRATS! press SPACE to restart!", True, "green"
         )
         screen.blit(gameover_text, (120, 270))
+    pygame.draw.circle(screen, "red", (270, 200), 10)
 
 
 def draw_board():
@@ -973,14 +982,13 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
     else:
         runaway_y = 0
     return_target = (255, 265)
-    if powerup:
-        # 230 < self.x_pos < 355 and 370 < self.y_pos < 310:
 
+    if powerup:
         if not blinky.dead and not eaten_ghost[0]:
             blink_target = (runaway_x, runaway_y)
         elif not blinky.dead and eaten_ghost[0]:
-            if 240 < blink_x < 365 and 340 < blink_y < 290:
-                blink_target = (270, 50)
+            if 240 < blink_x < 365 and 290 < blink_y < 340:
+                blink_target = (270, 200)
             else:
                 blink_target = (player_x, player_y)
         else:
@@ -988,8 +996,8 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
         if not inky.dead and not eaten_ghost[1]:
             ink_target = (runaway_x, player_y)
         elif not inky.dead and eaten_ghost[1]:
-            if 240 < ink_x < 365 and 340 < ink_y < 290:
-                ink_target = (270, 50)
+            if 240 < ink_x < 365 and 290 < ink_y < 340:
+                ink_target = (270, 200)
             else:
                 ink_target = (player_x, player_y)
         else:
@@ -997,46 +1005,46 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
         if not pinky.dead:
             pink_target = (player_x, runaway_y)
         elif not pinky.dead and eaten_ghost[2]:
-            if 240 < pink_x < 365 and 340 < pink_y < 290:
-                pink_target = (270, 50)
+            if 240 < pink_x < 365 and 290 < pink_y < 340:
+                pink_target = (270, 200)
             else:
                 pink_target = (player_x, player_y)
         else:
             pink_target = return_target
         if not clyde.dead and not eaten_ghost[3]:
-            clyd_target = (270, 50)
+            clyd_target = (270, 200)
         elif not clyde.dead and eaten_ghost[3]:
-            if 240 < clyd_x < 365 and 340 < clyd_y < 290:
-                clyd_target = (270, 50)
+            if 240 < clyd_x < 365 and 290 < clyd_y < 340:
+                clyd_target = (270, 200)
             else:
                 clyd_target = (player_x, player_y)
         else:
             clyd_target = return_target
     else:
         if not blinky.dead:
-            if 240 < blink_x < 365 and 340 < blink_y < 290:
-                blink_target = (270, 50)
+            if 240 < blink_x < 365 and 290 < blink_y < 340:
+                blink_target = (270, 200)
             else:
                 blink_target = (player_x, player_y)
         else:
             blink_target = return_target
         if not inky.dead:
-            if 240 < ink_x < 365 and 340 < ink_y < 290:
-                ink_target = (270, 50)
+            if 240 < ink_x < 365 and 290 < ink_y < 340:
+                ink_target = (270, 200)
             else:
                 ink_target = (player_x, player_y)
         else:
             ink_target = return_target
         if not pinky.dead:
-            if 240 < pink_x < 365 and 340 < pink_y < 290:
-                pink_target = (270, 50)
+            if 240 < pink_x < 365 and 290 < pink_y < 340:
+                pink_target = (270, 200)
             else:
                 pink_target = (player_x, player_y)
         else:
             pink_target = return_target
         if not clyde.dead:
-            if 240 < clyd_x < 365 and 340 < clyd_y < 290:
-                clyd_target = (270, 50)
+            if 240 < clyd_x < 365 and 290 < clyd_y < 340:
+                clyd_target = (270, 200)
             else:
                 clyd_target = (player_x, player_y)
         else:
@@ -1067,9 +1075,9 @@ while run:
         eaten_ghost = [False, False, False, False]
 
     # set moving false for 3 sec
-    if startUp_count < 120 and not game_over and not game_won:
+    if startup_counter < 120 and not game_over and not game_won:
         moving = False
-        startUp_count += 1
+        startup_counter += 1
     else:
         moving = True
 
@@ -1128,7 +1136,7 @@ while run:
         inky_direction,
         inky_dead,
         inky_box,
-        2,
+        1,
     )
     pinky = Ghost(
         pinky_x,
@@ -1139,7 +1147,7 @@ while run:
         pinky_direction,
         pinky_dead,
         pinky_box,
-        1,
+        2,
     )
     clyde = Ghost(
         clyde_x,
@@ -1150,7 +1158,7 @@ while run:
         clyde_direction,
         clyde_dead,
         clyde_box,
-        0,
+        3,
     )
     draw_misc()
     targets = get_targets(
@@ -1160,35 +1168,25 @@ while run:
     center_x = player_x + 13
     center_y = player_y + 15
     turns_allowed = check_position(center_x, center_y)
-
+    
     # not moving for 3 sec when the game start
     if moving:
         player_x, player_y = move_player(player_x, player_y)
-
         if not blinky_dead and not blinky.in_box:
             blinky_x, blinky_y, blinky_direction = blinky.move_blinky()
         else:
             blinky_x, blinky_y, blinky_direction = blinky.move_clyde()
-
-        if not inky_dead and not inky.in_box:
-            inky_x, inky_y, inky_direction = inky.move_inky()
-        else:
-            inky_x, inky_y, inky_direction = inky.move_clyde()
-
         if not pinky_dead and not pinky.in_box:
             pinky_x, pinky_y, pinky_direction = pinky.move_pinky()
         else:
             pinky_x, pinky_y, pinky_direction = pinky.move_clyde()
-
-        if not clyde_dead and not clyde.in_box:
-            clyde_x, clyde_y, clyde_direction = clyde.move_clyde()
+        if not inky_dead and not inky.in_box:
+            inky_x, inky_y, inky_direction = inky.move_inky()
         else:
-            clyde_x, clyde_y, clyde_direction = clyde.move_clyde()
+            inky_x, inky_y, inky_direction = inky.move_clyde()
+        clyde_x, clyde_y, clyde_direction = clyde.move_clyde()
 
-    score, powerup, power_counter, eaten_ghost = check_collisions(
-        score, powerup, power_counter, eaten_ghost
-    )
-
+    score, powerup, power_counter, eaten_ghost = check_collisions(score, powerup, power_counter, eaten_ghost)
 
     if not powerup:
         if (
@@ -1201,7 +1199,7 @@ while run:
                 powerup = False
                 power_counter = 0
                 lives -= 1
-                startUp_count = 0
+                startup_counter = 0
                 blinky_x = 40
                 blinky_y = 35
                 blinky_direction = 0
@@ -1209,7 +1207,7 @@ while run:
                 pinky_y = 247
                 pinky_direction = 2
                 inky_x = 286
-                inky_y = 283
+                inky_y = 270
                 inky_direction = 2
                 clyde_x = 286
                 clyde_y = 283
@@ -1222,7 +1220,7 @@ while run:
             else:
                 game_over = True
                 moving = False
-                startUp_count = 0
+                startup_counter = 0
 
     if (
         powerup
@@ -1234,7 +1232,7 @@ while run:
             powerup = False
             power_counter = 0
             lives -= 1
-            startUp_count = 0
+            startup_counter = 0
             blinky_x = 40
             blinky_y = 35
             blinky_direction = 0
@@ -1242,7 +1240,7 @@ while run:
             pinky_y = 247
             pinky_direction = 2
             inky_x = 286
-            inky_y = 283
+            inky_y = 270
             inky_direction = 2
             clyde_x = 286
             clyde_y = 283
@@ -1262,7 +1260,7 @@ while run:
             powerup = False
             power_counter = 0
             lives -= 1
-            startUp_count = 0
+            startup_counter = 0
             blinky_x = 40
             blinky_y = 35
             blinky_direction = 0
@@ -1270,7 +1268,7 @@ while run:
             pinky_y = 247
             pinky_direction = 2
             inky_x = 286
-            inky_y = 283
+            inky_y = 270
             inky_direction = 2
             clyde_x = 286
             clyde_y = 283
@@ -1283,7 +1281,7 @@ while run:
         else:
             game_over = True
             moving = False
-            startUp_count = 0
+            startup_counter = 0
     if (
         powerup
         and player_circle.colliderect(pinky.rect)
@@ -1294,7 +1292,7 @@ while run:
             powerup = False
             power_counter = 0
             lives -= 1
-            startUp_count = 0
+            startup_counter = 0
             blinky_x = 40
             blinky_y = 35
             blinky_direction = 0
@@ -1302,7 +1300,7 @@ while run:
             pinky_y = 247
             pinky_direction = 2
             inky_x = 286
-            inky_y = 283
+            inky_y = 270
             inky_direction = 2
             clyde_x = 286
             clyde_y = 283
@@ -1315,7 +1313,7 @@ while run:
         else:
             game_over = True
             moving = False
-            startUp_count = 0
+            startup_counter = 0
     if (
         powerup
         and player_circle.colliderect(clyde.rect)
@@ -1326,7 +1324,7 @@ while run:
             powerup = False
             power_counter = 0
             lives -= 1
-            startUp_count = 0
+            startup_counter = 0
             blinky_x = 40
             blinky_y = 35
             blinky_direction = 0
@@ -1334,7 +1332,7 @@ while run:
             pinky_y = 247
             pinky_direction = 2
             inky_x = 286
-            inky_y = 283
+            inky_y = 270
             inky_direction = 2
             clyde_x = 286
             clyde_y = 283
@@ -1347,7 +1345,7 @@ while run:
         else:
             game_over = True
             moving = False
-            startUp_count = 0
+            startup_counter = 0
     if (
         powerup
         and player_circle.colliderect(blinky.rect)
@@ -1403,7 +1401,7 @@ while run:
                 powerup = False
                 power_counter = 0
                 lives -= 1
-                startUp_count = 0
+                startup_counter = 0
                 player_x = 300
                 player_y = 425
                 direction = 0
@@ -1414,7 +1412,7 @@ while run:
                 pinky_y = 247
                 pinky_direction = 2
                 inky_x = 286
-                inky_y = 283
+                inky_y = 270
                 inky_direction = 2
                 clyde_x = 286
                 clyde_y = 283
@@ -1449,6 +1447,13 @@ while run:
     if direction_command == 3 and turns_allowed[3]:
         direction = 3
 
+    
+
+    if player_x >= WIDTH - 30:
+        player_x = 0
+    elif player_x < -1:
+        player_x = WIDTH - 30
+
     if blinky.in_box and blinky.dead:
         blinky_dead = False
     if inky.in_box and inky.dead:
@@ -1457,11 +1462,6 @@ while run:
         pinky_dead = False
     if clyde.in_box and clyde.dead:
         clyde_dead = False
-
-    if player_x >= WIDTH - 30:
-        player_x = 0
-    elif player_x < -1:
-        player_x = WIDTH - 30
 
     pygame.display.flip()
 pygame.quit()
