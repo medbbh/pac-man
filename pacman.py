@@ -25,9 +25,56 @@ moving = False
 num1 = (HEIGHT - 50) // 32
 num2 = WIDTH // 30
 
+# pacman initial position 
 player_x = 300
 player_y = 425
 direction = 0
+
+counter = 0
+flicker = False
+
+powerup = False
+power_counter = 0
+lives = 3
+game_over = False
+game_won = False
+
+# Ghost variables
+#  red
+blinky_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/blinky.png"), (29, 29)
+)
+# pink
+pinky_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/pinky.png"), (29, 29)
+)
+# blue
+inky_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/inky.png"), (29, 29)
+)
+# orange
+clyde_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/clyde.png"), (29, 29)
+)
+# spooked (the ghost when the player eats a powerup)
+spooked_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/powerup.png"), (29, 29)
+)
+# dead (ghost eys)
+dead_img = pygame.transform.scale(
+    pygame.image.load(f"assets/ghost_images/dead.png"), (30, 30)
+)
+
+eaten_ghost = [False, False, False, False]
+
+targets = [
+    (player_x, player_y),
+    (player_x, player_y),
+    (player_x, player_y),
+    (player_x, player_y),
+]
+
+# the initial position of each ghost
 blinky_x = 40
 blinky_y = 35
 blinky_direction = 0
@@ -40,52 +87,6 @@ inky_direction = 2
 clyde_x = 286
 clyde_y = 283
 clyde_direction = 2
-
-counter = 0
-flicker = False
-
-powerup = False
-power_counter = 0
-lives = 3
-game_over = False
-game_won = False
-# Ghost var
-
-#  blinky
-blinky_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/blinky.png"), (29, 29)
-)
-# pinky
-pinky_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/pinky.png"), (29, 29)
-)
-# inky
-inky_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/inky.png"), (29, 29)
-)
-# clyde
-clyde_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/clyde.png"), (29, 29)
-)
-# spooked
-spooked_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/powerup.png"), (29, 29)
-)
-# dead
-dead_img = pygame.transform.scale(
-    pygame.image.load(f"assets/ghost_images/dead.png"), (30, 30)
-)
-
-
-
-eaten_ghost = [False, False, False, False]
-
-targets = [
-    (player_x, player_y),
-    (player_x, player_y),
-    (player_x, player_y),
-    (player_x, player_y),
-]
 
 blinky_dead = False
 pinky_dead = False
@@ -240,7 +241,6 @@ class Ghost:
 
     def move_clyde(self):
         # r, l, u, d
-        # clyde is going to turn whenever advantageous for pursuit
         if self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
@@ -369,7 +369,6 @@ class Ghost:
 
     def move_blinky(self):
         # r, l, u, d
-        # blinky is going to turn whenever colliding with walls, otherwise continue straight
         if self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
@@ -475,7 +474,6 @@ class Ghost:
 
     def move_inky(self):
         # r, l, u, d
-        # inky turns up or down at any point to pursue, but left and right only on collision
         if self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
@@ -597,7 +595,6 @@ class Ghost:
 
     def move_pinky(self):
         # r, l, u, d
-        # inky is going to turn left or right whenever advantageous, but only up or down on collision
         if self.direction == 0:
             if self.target[0] > self.x_pos and self.turns[0]:
                 self.x_pos += self.speed
@@ -719,23 +716,23 @@ for i in range(1, 5):
     )
 
 def draw_misc():
-    # pygame.draw.circle(screen, "red", (365, 310), 1)
-
     score_text = font.render(f"Score : {score}", True, "white")
     screen.blit(score_text, (10, 600))
+    # display a red circle at the bottom when the powerup is active
     if powerup:
         pygame.draw.circle(screen, "red", (150, 608), 10)
+    # display how many lives left
     for i in range(lives):
         screen.blit(
             pygame.transform.scale(player_images[0], (20, 20)), (500 + i * 30, 595)
         )
+    # game over message
     if game_over:
-        # pygame.draw(screen, "black", (50, 200, 400, 500), 0, 10)
-        # pygame.draw(screen, "white", (70, 220, 360, 460), 0, 10)
         pygame.draw.rect(screen, "white", pygame.Rect(100, 200, 400, 200))
         pygame.draw.rect(screen, "gray", pygame.Rect(110, 210, 380, 180))
         gameover_text = font.render("Game over! press SPACE to restart!", True, "red")
         screen.blit(gameover_text, (120, 270))
+    # game won message
     if game_won:
         pygame.draw.rect(screen, "white", pygame.Rect(100, 200, 400, 230))
         pygame.draw.rect(screen, "gray", pygame.Rect(110, 210, 380, 210))
@@ -859,8 +856,6 @@ def draw_player():
 
 def check_position(centerx, centery):
     turns = [False, False, False, False]
-    # num1 = (HEIGHT - 50) // 32
-    # num2 = WIDTH // 30
     num3 = 11
     # check collisions based on center x and center y of player +/- fudge number
     if centerx // 30 < 29:
@@ -920,8 +915,6 @@ def move_player(playerx, playery):
 
 
 def check_collisions(game_score, power, power_count, eaten_ghosts):
-    # num1 = (HEIGHT - 50) // 32
-    # num2 = WIDTH // 30
 
     if 0 < player_x < 570:
         if level[center_y // num1][center_x // num2] == 1:
@@ -948,13 +941,11 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
         runaway_y = 0
     return_target = (255, 265)
 
-    print("1 : ",blinky.in_box)
-    # 237 < self.x_pos < 365 and 249 < self.y_pos < 310:
-
     if powerup:
         if not blinky.dead and not eaten_ghost[0]:
             blink_target = (runaway_x, runaway_y)
         elif not blinky.dead and eaten_ghost[0]:
+            # if the ghost is in the box then his target is to go out of the box
             if 237 < blink_x < 365 and 249 < blink_y < 310:
                 blink_target = (270, 50)
                 
@@ -1145,7 +1136,6 @@ while run:
 
             blinky_x, blinky_y, blinky_direction = blinky.move_blinky()
         else:
-            print("#################")
             blinky_x, blinky_y, blinky_direction = blinky.move_clyde()
         if not pinky_dead and not pinky.in_box:
             pinky_x, pinky_y, pinky_direction = pinky.move_pinky()
@@ -1155,7 +1145,6 @@ while run:
             inky_x, inky_y, inky_direction = inky.move_inky()
         else:
             inky_x, inky_y, inky_direction = inky.move_clyde()
-        print("33333333333333333333")
         
         clyde_x, clyde_y, clyde_direction = clyde.move_clyde()
 
@@ -1420,8 +1409,7 @@ while run:
     if direction_command == 3 and turns_allowed[3]:
         direction = 3
 
-    
-
+    # the player can tranport between the doors (4ouk lbiban li v zer l3arbi w l3asri)
     if player_x >= WIDTH - 30:
         player_x = 0
     elif player_x < -1:
