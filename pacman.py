@@ -14,7 +14,21 @@ font = pygame.font.Font("freesansbold.ttf", 20)
 level = copy.deepcopy(boards)
 PI = math.pi
 player_images = []
+# sound effect
 
+beginning_sfx = pygame.mixer.Sound('assets/sound_effect/beginning.wav')
+chomp_sfx = pygame.mixer.Sound('assets/sound_effect/chomp.wav')
+death_sfx = pygame.mixer.Sound('assets/sound_effect/death.wav')
+powerup_sfx = pygame.mixer.Sound('assets/sound_effect/powerup.wav')
+eatghost_sfx = pygame.mixer.Sound('assets/sound_effect/eatghost.wav')
+intermission_sfx = pygame.mixer.Sound('assets/sound_effect/intermission.wav')
+
+beginning_sfx.set_volume(0.2)
+chomp_sfx.set_volume(0.7)
+death_sfx.set_volume(0.3)
+powerup_sfx.set_volume(0.5)
+eatghost_sfx.set_volume(0.1)
+intermission_sfx.set_volume(0.3)
 # RIGHT , LEFT , UP ,DOWN
 turns_allowed = [False, False, False, False]
 direction_command = 0
@@ -127,6 +141,7 @@ class Ghost:
             screen.blit(spooked_img, (self.x_pos, self.y_pos))
         else:
             screen.blit(dead_img, (self.x_pos, self.y_pos))
+            eatghost_sfx.play()
         ghost_rect = pygame.rect.Rect((self.center_x, self.center_y), (30, 30))
 
         return ghost_rect
@@ -920,9 +935,11 @@ def check_collisions(game_score, power, power_count, eaten_ghosts):
         if level[center_y // num1][center_x // num2] == 1:
             level[center_y // num1][center_x // num2] = 0
             game_score += 10
+            chomp_sfx.play(maxtime=30)
         if level[center_y // num1][center_x // num2] == 2:
             level[center_y // num1][center_x // num2] = 0
             game_score += 50
+            powerup_sfx.play()
             power = True
             power_count = 0
             eaten_ghosts = [False, False, False, False]
@@ -1179,6 +1196,7 @@ while run:
                 pinky_dead = False
                 inky_dead = False
                 clyde_dead = False
+                death_sfx.play()
             else:
                 game_over = True
                 moving = False
@@ -1212,6 +1230,8 @@ while run:
             pinky_dead = False
             inky_dead = False
             clyde_dead = False
+            death_sfx.play()
+
     if (
         powerup
         and player_circle.colliderect(inky.rect)
@@ -1240,6 +1260,8 @@ while run:
             pinky_dead = False
             inky_dead = False
             clyde_dead = False
+            death_sfx.play()
+
         else:
             game_over = True
             moving = False
@@ -1272,6 +1294,7 @@ while run:
             pinky_dead = False
             inky_dead = False
             clyde_dead = False
+            death_sfx.play()
         else:
             game_over = True
             moving = False
@@ -1304,6 +1327,7 @@ while run:
             pinky_dead = False
             inky_dead = False
             clyde_dead = False
+            death_sfx.play()
         else:
             game_over = True
             moving = False
@@ -1317,6 +1341,7 @@ while run:
         blinky_dead = True
         eaten_ghost[0] = True
         score += 2 ** eaten_ghost.count(True) * 100
+        intermission_sfx.play()
     if (
         powerup
         and player_circle.colliderect(inky.rect)
@@ -1326,6 +1351,7 @@ while run:
         inky_dead = True
         eaten_ghost[1] = True
         score += 2 ** eaten_ghost.count(True) * 100
+        intermission_sfx.play()
 
     if (
         powerup
@@ -1336,6 +1362,7 @@ while run:
         pinky_dead = True
         eaten_ghost[2] = True
         score += 2 ** eaten_ghost.count(True) * 100
+        intermission_sfx.play()
 
     if (
         powerup
@@ -1346,6 +1373,7 @@ while run:
         clyde_dead = True
         eaten_ghost[3] = True
         score += 2 ** eaten_ghost.count(True) * 100
+        intermission_sfx.play()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -1389,6 +1417,7 @@ while run:
                 level = copy.deepcopy(boards)
                 game_over = False
                 game_won = False
+                beginning_sfx.play()
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT and direction_command == 0:
